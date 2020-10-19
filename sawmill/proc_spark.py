@@ -1,5 +1,5 @@
 """
-proc_lib:
+proc_spark:
 spark utils to process and search for the output
 """
 
@@ -9,11 +9,9 @@ import numpy as np
 import datetime
 import subprocess
 import matplotlib.pyplot as plt
+import tarfile
 
 os.environ['JAVA_HOME'] = '/usr/lib/jvm/java-1.8.0-openjdk-amd64'
-baseDir = os.environ['LAV_DIR']
-# import findspark
-# findspark.init()
 import pyspark
 from pyspark import SparkContext, SparkConf
 from pyspark.sql import SQLContext
@@ -38,11 +36,6 @@ conf.set("spark.sql.crossJoin.enabled", "true")
 sc = SparkContext.getOrCreate()
 sqlContext = SQLContext(sc)
 sc.setLogLevel("ERROR")
-
-import tarfile
-
-key_file = baseDir + '/credenza/geomadi.json'
-cred = json.load(open(baseDir + "/credenza/geomadi.json"))
 
 def getHdfsPattern(projDir,is_lit=False,patterN="part-00000",isRemote=False):
     """download file list from hdfs"""

@@ -36,6 +36,8 @@ def exec_athena(athena,query,params):
             return location, result
         else:
             time.sleep(2)
+    location = resp['QueryExecution']['ResultConfiguration']['OutputLocation']
+    return location
 
 def download_s3_subdir(bucketN,fileN,download_path):
     """download content of a subdirectory"""
