@@ -1,0 +1,85 @@
+version: '3'
+
+services:
+  reverse-proxy:
+    image: traefik:v2.8
+      #command: --configfile=traefik/traefik.yml --api.insecure=true --providers.docker
+    ports:
+      - "80:80"
+      - "8080:8080"
+      - "443:443"
+        #network_mode: host
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:rw
+      - ./traefik/traefik.yml:/etc/traefik/traefik.yml:ro
+      - ./traefik/traefik.d:/traefik.d:ro
+      - ./traefik/acme.json:/etc/traefik/acme.json:rw
+      - ./logs/:/logs/:rw
+        #deploy:
+        #replicas: 1
+        #restart_policy: unless-stopped
+    networks:
+      - traefik-net 
+    labels:
+      traefik.enable: "true"
+      traefik.docker.network: "traefik-net"
+      #traefik.http.routers.traefik.entrypoints: "websecure"
+      #traefik.http.routers.traefik.middlewares: "traefikAuth@file,default@file"
+      #traefik.http.routers.traefik.rule: "Host(`${TRAEFIK_SUBDOMAIN}.${TRAEFIK_DOMAIN}`)"
+      #traefik.http.routers.traefik.service: "api@internal"
+      #traefik.http.routers.traefik.tls.certresolver: "letsencrypt"
+      #traefik.http.routers.traefik.tls.options: "modern@file"
+      #traefik.http.routers.traefik.tls: "true"
+      #traefik.http.services.traefik.loadbalancer.server.port: 8080
+      #traefik.http.services.traefik.loadbalancer.sticky.cookie.httpOnly: "true"
+      #traefik.http.services.traefik.loadbalancer.sticky.cookie.secure: "true"
+
+
+  db:
+    image: postgres:14.1-alpine
+    restart: always
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    ports:
+      - '5432:5432'
+    volumes: 
+      - ./db:/var/lib/postgresql/data
+    networks:
+      - traefik-net 
+ 
+  prometheus:
+    image: bitnami/prometheus:latest
+    ports:
+      - 127.0.0.1:9090:9090
+    user: "1000:1000"
+    volumes:
+      - ./prometheus/prometheus.yml:/opt/bitnami/prometheus/conf/prometheus.yml:ro
+      - ./prometheus/prometheus-data/:/opt/bitnami/prometheus/data:rw
+    labels:
+      traefik.http.services.prometheus.loadbalancer.server.port: 9090
+      #traefik.http.routers.prometheus.rule: Host(`${MAILSERVER_MONITORING_HOST}`)
+      traefik.http.routers.prometheus.tls: true
+      traefik.http.routers.prometheus.tls.certresolver: letsencrypt
+      traefik.http.routers.prometheus.middlewares: prometheus-auth
+      traefik.http.middlewares.prometheus-auth.basicauth.users: lm:$$apr1$$UAQ/Go/q$$ivRDc4xbU.p9ny8moUid40
+    networks:
+      - traefik-net 
+ 
+  docker-ui:
+    image: uifd/ui-for-docker
+    volumes:
+        - /etc/letsencrypt/live/storage.lightmeter.io/:/certs
+        - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      - 9000:9000
+        #command:
+        #- -tlsverify   
+        #tcp://my-docker-host.domain:2376
+    networks:
+      - traefik-net 
+ 
+networks: 
+  traefik-net: 
+    external: true

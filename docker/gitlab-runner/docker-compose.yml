@@ -1,0 +1,64 @@
+version: '3.5'
+
+services:
+  dind:
+    image: docker:20-dind
+    restart: always
+    privileged: true
+    environment:
+      DOCKER_TLS_CERTDIR: ""
+    command:
+      - --storage-driver=overlay2
+    networks:
+      - traefik-net
+
+  runner:
+    restart: unless-stopped
+    image: registry.gitlab.com/gitlab-org/gitlab-runner:alpine
+    #image: gitlab/gitlab-runner:latest
+    depends_on:
+      - dind
+    environment:
+      - DOCKER_HOST=tcp://dind:2375
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      # - ./config.toml:/etc/gitlab-runner/config.toml
+      # - gitlab-runner-config:/etc/gitlab-runner
+      - ./config:/etc/gitlab-runner
+      - ./certs:/certs
+    networks:
+      - traefik-net
+
+  register-runner:
+    restart: 'no'
+    image: registry.gitlab.com/gitlab-org/gitlab-runner:alpine
+    depends_on:
+      - dind
+    environment:
+      - CI_SERVER_URL=${CI_SERVER_URL}
+      - REGISTRATION_TOKEN=${GIT_PROJ_TOKEN}
+    command:
+      - register
+      - --url=https://gitlab.com/
+      # - --registration-token=${GIT_PROJ_TOKEN}
+      - --executor=docker 
+      - --docker-image="docker:20.10.16"
+      - --non-interactive
+      # - --locked=false
+      - --name=${RUNNER_NAME}
+      - --docker-privileged 
+      - --docker-volumes="/var/run/docker.sock:/var/run/docker.sock"
+      - --docker-volumes="./certs:/certs/"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./config:/etc/gitlab-runner
+      - ./certs:/certs
+    # networks:
+    #   - traefik-net
+
+volumes:
+  gitlab-runner-config: {}
+
+networks:
+  traefik-net:
+    external: true

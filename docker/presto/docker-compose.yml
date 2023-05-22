@@ -1,0 +1,45 @@
+version: '3'
+
+services:
+  coordinator:
+    image: ahanaio/prestodb-sandbox
+    # ports:
+    #   - "8090:8090"
+    container_name: "coordinator"
+    volumes:
+      - ./config.properties:/opt/presto-server/etc/config.properties
+      - ./local_postgres.properties:/opt/presto-server/etc/catalog/postgres.properties
+      - ./kafka.properties:/opt/presto-server/etc/catalog/kafka.properties
+      - ./pass_auth.properties:/opt/presto-server/etc/password-authenticator.properties
+      - ./password.db:/opt/presto-server/etc/password.db
+      - ./presto_keystore.jks:/opt/presto-server/etc/presto_keystore.jks
+    networks:
+      - traefik-net
+    
+  # workerone:
+  #   image: ahanaio/prestodb-sandbox
+  #   container_name: "worker1"
+  #   ports:
+  #     - "8091:8091"
+  #   volumes:
+  #     - ./worker1/config.properties:/opt/presto-server/etc/config.properties
+  #   depends_on:
+  #     - coordinator
+  #   networks:
+  #     - traefik-net
+      
+  # workertwo:
+  #   image: ahanaio/prestodb-sandbox
+  #   container_name: "worker2"
+  #   ports:
+  #     - "8092:8092"
+  #   volumes:
+  #     - ./worker2/config.properties:/opt/presto-server/etc/config.properties
+  #   depends_on:
+  #     - coordinator
+  #   networks:
+  #     - traefik-net
+
+networks:
+  traefik-net:
+    external: true

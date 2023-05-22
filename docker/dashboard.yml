@@ -1,0 +1,18 @@
+http:
+  routers:
+    to-docker-ui:
+      rule: "Host(`storage.lightmeter.io`) && PathPrefix(`/docker-ui/`)"
+      middlewares:
+        - test-user
+      service: docker-ui
+
+  middleware:
+    test-user:
+      basicAuth:
+        users: ["admin:$apr1$8Y4INeOi$dd.TYrzzG.EvLYOVKXMnu0"]
+
+  services:
+    docker-ui:
+      loadBalancer:
+        servers:
+          -url: https://storage.lightmeter.io:9000

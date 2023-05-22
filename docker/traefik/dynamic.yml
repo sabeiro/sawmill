@@ -1,0 +1,24 @@
+http:
+  routers:
+    to-whoami:
+      rule: "Host(`storage.ligthmeter.io`) && PathPrefix(`/whoami/`)"
+      middlewares:
+      - test-user
+      service: whoami
+
+    blog:
+      rule: "(Host(`storage.lightmeter.io`) && Path(`/blog`)) || Host(`blog.storage.lightmeter.io`)"
+      tls:
+        certResolver: letsencrypt
+
+  middlewares:
+    test-user:
+      basicAuth:
+        users:
+        - test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/
+
+  services:
+    whoami:
+      loadBalancer:
+        servers:
+        - url: http://private/whoami-service

@@ -1,0 +1,217 @@
+server {
+    listen   80; 
+    listen   [::]:80 default_server ipv6only=on;
+	server_name ${PROD_SERVER};
+    error_log  /var/log/nginx/error.log error;
+    access_log /var/log/nginx/access.log;
+    location /.well-known/acme-challenge/ {
+        root /var/www/certbot;
+        allow all;
+    }
+	return 301 https://${DOLLAR}host${DOLLAR}request_uri;
+}
+upstream php_upstream {
+   server php-app fail_timeout=5s max_fails=5;
+}
+server {
+    listen 443 ssl;
+    server_name ${PROD_SERVER};
+    server_tokens off;
+    ssl_certificate /etc/letsencrypt/live/${PROD_SERVER}/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/${PROD_SERVER}/privkey.pem;
+    include /etc/letsencrypt/options-ssl-nginx.conf;
+    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
+    error_log  /var/log/nginx/error.log error;
+    access_log /var/log/nginx/access.log;
+    location / {
+      	root /var/www/html/;
+    }
+	location ~ ^/.+\.php(/|$) {
+        fastcgi_pass php_upstream;
+        fastcgi_split_path_info ^(.+\.php)(/.*)${DOLLAR};
+		#fastcgi_param SCRIPT_FILENAME${DOLLAR}document_root${DOLLAR}fastcgi_script_name;
+        include fastcgi_params;
+    }
+}
+server {
+	listen 80;
+	server_name schedule.${PROD_SERVER};
+	location /.well-known/acme-challenge/ {
+	   	root /var/www/certbot;
+        allow all;
+    }
+  	location / {
+      return 301 https://${DOLLAR}host${DOLLAR}request_uri;
+  	}
+}
+server {
+    listen 443 ssl;
+    server_name schedule.${PROD_SERVER};
+    ssl_certificate /etc/letsencrypt/live/schedule.${PROD_SERVER}/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/schedule.${PROD_SERVER}/privkey.pem;
+	location / {
+        proxy_pass http://airflow-webserver:8080/;
+        proxy_set_header Host ${DOLLAR}host;
+        proxy_set_header X-Real-IP ${DOLLAR}remote_addr;
+        proxy_set_header X-Forwarded-For ${DOLLAR}proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto ${DOLLAR}scheme;
+	}
+	location /flower/ {
+		auth_basic "Administrator s Area";
+		auth_basic_user_file /etc/apache2/.htpasswd;
+		#return 301 http://flower:5555${DOLLAR}request_uri;	
+        proxy_pass http://flower:5555/flower/;
+        proxy_set_header Host ${DOLLAR}host;
+        proxy_set_header X-Real-IP ${DOLLAR}remote_addr;
+        proxy_set_header X-Forwarded-For ${DOLLAR}proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto ${DOLLAR}scheme;
+	}
+	location /kafka {
+		auth_basic "Administrator s Area";
+		auth_basic_user_file /etc/apache2/.htpasswd; 
+        proxy_pass http://kafka-ui:8080;
+        proxy_set_header Host ${DOLLAR}host;
+        proxy_set_header X-Real-IP ${DOLLAR}remote_addr;
+        proxy_set_header X-Forwarded-For ${DOLLAR}proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto ${DOLLAR}scheme;
+	}
+	location /presto {
+		auth_basic "Administrator s Area";
+		auth_basic_user_file /etc/apache2/.htpasswd; 
+        proxy_pass http://coordinator:8090/;
+        proxy_set_header Host ${DOLLAR}host;
+        proxy_set_header X-Real-IP ${DOLLAR}remote_addr;
+        proxy_set_header X-Forwarded-For ${DOLLAR}proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto ${DOLLAR}scheme;
+	}
+}
+server {
+  listen 80;
+  server_name docker.${PROD_SERVER};
+  location /.well-known/acme-challenge/ {
+  	root /var/www/certbot;
+    allow all;
+  }
+  location / {
+    return 301 https://${DOLLAR}host${DOLLAR}request_uri;
+  }
+}
+server {
+    listen 443 ssl;
+    server_name docker.${PROD_SERVER};
+    ssl_certificate /etc/letsencrypt/live/docker.${PROD_SERVER}/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/docker.${PROD_SERVER}/privkey.pem;
+	auth_basic "Administrator s Area";
+	auth_basic_user_file /etc/apache2/.htpasswd; 
+    resolver 127.0.0.11 valid=10s;
+    resolver_timeout 5s; 
+	location / {
+		set ${DOLLAR}upstream http://docker-ui:9000/;
+		#proxy_pass ${DOLLAR}upstream;
+        fastcgi_pass ${DOLLAR}upstream;
+        proxy_set_header Host ${DOLLAR}host;
+        proxy_set_header X-Real-IP ${DOLLAR}remote_addr;
+        proxy_set_header X-Forwarded-For ${DOLLAR}proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto ${DOLLAR}scheme;
+	}
+}
+server {
+  listen 80;
+  server_name metabase.${PROD_SERVER};
+  location /.well-known/acme-challenge/ {
+   	root /var/www/certbot;
+    allow all;
+  }
+  location / {
+      return 301 https://${DOLLAR}host${DOLLAR}request_uri;
+  }
+}
+server {
+    listen 443 ssl;
+    server_name metabase.${PROD_SERVER};
+    ssl_certificate /etc/letsencrypt/live/metabase.${PROD_SERVER}/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/metabase.${PROD_SERVER}/privkey.pem;
+	location / {
+        proxy_pass http://metabase:3000/;
+        proxy_set_header Host ${DOLLAR}host;
+        proxy_set_header X-Real-IP ${DOLLAR}remote_addr;
+        proxy_set_header X-Forwarded-For ${DOLLAR}proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto ${DOLLAR}scheme;
+	}
+}
+server {
+  listen 80;
+  server_name interface.${PROD_SERVER};
+  location /.well-known/acme-challenge/ {
+   	root /var/www/certbot;
+    allow all;
+  }
+  location / {
+    return 301 https://${DOLLAR}host${DOLLAR}request_uri;
+  }
+}
+upstream live_upstream {
+   server live_py:5005 fail_timeout=5s max_fails=5;
+}
+server {
+    listen 443 ssl;
+    server_name interface.${PROD_SERVER};
+    ssl_certificate /etc/letsencrypt/live/interface.${PROD_SERVER}/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/interface.${PROD_SERVER}/privkey.pem;
+    client_max_body_size 100M;
+    error_log  /var/log/nginx/error.log error;
+	gzip on;
+    access_log /var/log/nginx/access-interface.log compression;
+    resolver 127.0.0.11 valid=10s;
+    resolver_timeout 5s; 
+	location / {
+		set ${DOLLAR}upstream http://live_py:5005;	
+        proxy_pass ${DOLLAR}upstream;
+        # proxy_pass http://live_py:5005/;
+        proxy_set_header Host ${DOLLAR}host;
+        proxy_set_header X-Real-IP ${DOLLAR}remote_addr;
+        proxy_set_header X-Forwarded-For ${DOLLAR}proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto ${DOLLAR}scheme;
+	}
+	location /v1/ {
+		auth_basic "auth area";
+		auth_basic_user_file /etc/apache2/.htpasswd.go;
+		#proxy_pass http://live_kafka_ws_pubsub:5007/v1/;
+		set ${DOLLAR}upstream http://live_kafka_ws_pubsub:5007;	
+        proxy_pass ${DOLLAR}upstream;
+        proxy_set_header Host ${DOLLAR}host;
+        proxy_set_header X-Real-IP ${DOLLAR}remote_addr;
+        proxy_set_header X-Forwarded-For ${DOLLAR}proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto ${DOLLAR}scheme;
+        proxy_set_header Upgrade ${DOLLAR}http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_http_version 1.1;
+	}
+}
+server {
+  listen 80;
+  server_name ingest.${PROD_SERVER};
+  location /.well-known/acme-challenge/ {
+   	root /var/www/certbot;
+    allow all;
+  }
+  location / {
+    return 301 https://${DOLLAR}host${DOLLAR}request_uri;
+  }
+}
+server {
+    listen 443 ssl;
+    server_name ingest.${PROD_SERVER};
+    ssl_certificate /etc/letsencrypt/live/ingest.${PROD_SERVER}/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/ingest.${PROD_SERVER}/privkey.pem;
+    resolver 127.0.0.11 valid=10s;
+    resolver_timeout 5s; 
+    location / {
+		set ${DOLLAR}upstream http://go_ingest:5006;	
+        proxy_pass ${DOLLAR}upstream;
+        proxy_set_header Host ${DOLLAR}host;
+        proxy_set_header X-Real-IP ${DOLLAR}remote_addr;
+        proxy_set_header X-Forwarded-For ${DOLLAR}proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto ${DOLLAR}scheme;
+    }
+}

@@ -1,0 +1,60 @@
+metrics:
+  prometheus:
+    entryPoint: metrics
+
+providers:
+  file:
+    directory: "/traefik.d"
+    filename: "/etc/traefik/traefik.yml"
+    watch: true
+  docker:
+    endpoint: "unix:///var/run/docker.sock"
+    exposedByDefault: false
+    network: "traefik-net" 
+    #swarmmode: true   
+    #swarmModeRefreshSeconds: 15 
+    watch: true 
+      #file:
+      #filename: "/etc/traefik/config.yml"
+      #watch: true 
+      #providersThrottleDuration: 10 
+
+
+api:
+  dashboard: true
+  insecure: true
+  
+entryPoints:
+  web:
+    address: :80
+    http:
+      redirections:
+        entryPoint:
+          to: websecure
+          scheme: https
+          permanent: true
+  websecure:
+    address: :443
+  postgres:
+    address: :5433
+  metrics:
+    address: 172.17.0.1:6032
+
+
+certificatesResolvers:
+  letsencrypt:
+    acme:
+      email: sysadmin@lightmeter.io
+      storage: /etc/traefik/acme.json
+      #tlsChallenge: {}
+      httpChallenge:
+        entryPoint: web
+
+accessLog:
+  filePath: "/logs/traefik-access.log"
+  format: json
+  bufferingSize: 100
+
+accesslog: true
+
+

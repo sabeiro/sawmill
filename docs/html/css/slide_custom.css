@@ -1,0 +1,12 @@
+body {
+    font-family: "Gill Sans", calibri, geneva, sans-serif;
+}
+h1, h2, h3 {
+    font-family: calibri, geneva, sans-serif;
+}
+.figure img{
+    width: 1200px;
+}
+.caption{
+    font-size: 50%;
+}

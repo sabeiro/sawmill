@@ -1,0 +1,1 @@
+call prepare_bi();

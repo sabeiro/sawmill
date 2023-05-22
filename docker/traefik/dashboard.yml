@@ -1,0 +1,14 @@
+http:
+  routers:
+    dashboard:
+      rule: Host(`storage.lightmeter.io`)
+      tls: true
+      certresolver: letsencrypt
+      service: api@internal
+      middelware: auth
+
+  middelware:
+    auth:
+      basicauth:
+        users: suser:spass
+

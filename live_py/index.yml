@@ -1,0 +1,20 @@
+Push to kafka
+post a message to a topic
+---
+tags:
+  - push
+parameters:
+  - name: topic
+    in: path
+    type: string
+    required: true
+    description: The topic name
+  - name: json-payload
+    in: query
+    type: json
+    description: message to the topic
+responses:
+  500:
+    description: wrong tocken/topic
+  200:
+    description: message added to the topic

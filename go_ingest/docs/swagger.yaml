@@ -1,0 +1,147 @@
+basePath: /
+definitions:
+  main.queryD:
+    properties:
+      action:
+        description: |-
+          action: SQL between SELECT and FROM
+           in: string
+        type: string
+      filter:
+        description: |-
+          filter: additional filters after table name
+           in: string
+        type: string
+      id:
+        description: |-
+          id of the entry
+           in: int64
+        type: integer
+      table:
+        description: |-
+          table: name of the table
+           in: string
+        type: string
+    type: object
+info:
+  contact:
+    email: via@l
+    name: API Support
+  description: 'Handler for selected db operations, example: https://gitlab.com/lightmeter/data-pipeline/-/blob/main/parse_source/test_goBackend.py'
+  license:
+    name: CC by-nc-sa
+    url: https://creativecommons.org/licenses/by-nc-sa/4.0/
+  termsOfService: http://swagger.io/terms/
+  title: Go ingest app
+  version: "1.0"
+paths:
+  /authenticate:
+    get:
+      consumes:
+      - application/json
+      description: 'Access token for db queries, send an header base64(user:pass),
+        ex: "Authentification": "XNlcl9zY3J"'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      summary: get access token
+      tags:
+      - auth
+  /create:
+    post:
+      consumes:
+      - application/json
+      description: 'insert into table, example: {"id":0,"action":"(name,price) values
+        (''test_prod'',11.2)","table":"db.product","filter":""}'
+      parameters:
+      - description: add entry to table
+        in: body
+        name: query
+        required: true
+        schema:
+          $ref: '#/definitions/main.queryD'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      summary: insert into table
+      tags:
+      - sql
+  /delete/{table}/{id}:
+    get:
+      consumes:
+      - application/json
+      description: 'delete entry, example: /delete/products/1'
+      parameters:
+      - description: add entry to table
+        in: body
+        name: query
+        required: true
+        schema:
+          $ref: '#/definitions/main.queryD'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      summary: delete entry
+      tags:
+      - sql
+  /route-request:
+    get:
+      consumes:
+      - application/json
+      description: add platform token to header
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      summary: add platform token to header
+      tags:
+      - auth
+  /select:
+    post:
+      consumes:
+      - application/json
+      description: 'chose table and fields to extract, example: {"id":0,"action":"*","table":"db.product","filter":"WHERE
+        id=1"}'
+      parameters:
+      - description: add entry to table
+        in: body
+        name: query
+        required: true
+        schema:
+          $ref: '#/definitions/main.queryD'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      summary: select from table
+      tags:
+      - sql
+  /update/{table}/{id}:
+    get:
+      consumes:
+      - application/json
+      description: 'update entry, example: /update/product/1'
+      parameters:
+      - description: add entry to table
+        in: body
+        name: query
+        required: true
+        schema:
+          $ref: '#/definitions/main.queryD'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      summary: update entry
+      tags:
+      - sql
+swagger: "2.0"

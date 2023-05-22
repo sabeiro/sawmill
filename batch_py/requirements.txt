@@ -1,0 +1,11 @@
+#sudo apt install python3-dev libpq-dev gcc libc-dev libffi-dev
+#apk add python3-dev libpq-dev gcc libc-dev libffi-dev
+pandas
+numpy
+requests
+psycopg2
+sqlalchemy
+boto3
+kafka-python
+mail-parser
+pyarrow

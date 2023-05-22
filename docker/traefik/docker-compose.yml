@@ -1,0 +1,179 @@
+version: '3'
+# https://graspingtech.com/docker-compose-traefik/
+# https://testdriven.io/blog/flask-docker-traefik/
+
+# x-python-common:
+#   &python-common
+#   env_file:
+#     - ./python/database.env
+#   networks:
+#     - traefik-net
+    
+services:
+  traefik:
+    image: "traefik:latest"
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+      - "443:443"
+    labels:
+      traefik.enable: true
+      traefik.port: 8080
+      traefik.http.routers.traefik_https.rule: Host(`${SERVER_ROOT}`)
+      traefik.http.routers.traefik_https.entrypoints: websecure
+      traefik.http.routers.traefik_https.tls: true
+      traefik.http.routers.traefik_https.tls.certResolver: lets-encrypt
+      traefik.http.routers.traefik_https.service: api@internal
+      traefik.backend: home
+      traefik.frontend.rule: "PathPrefixStrip:/"
+      traefik.port: 2015
+      traefik.docker.network: ntw_front
+      traefik.frontend.entryPoints: websecure
+      #traefik.http.routers.traefik_https.middlewares: auth-dash
+      #traefik.http.middlewares.auth-dash.basicauth.users: "admin:$$apr1$$.Mqpju24$OH9r.WHWHvUeUy3L0qsUM0"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - ./traefik/traefik.yml:/etc/traefik/traefik.yml:ro
+      - ./traefik/traefik.d:/etc/traefik/traefik.d:ro
+      - ./traefik/acme.json:/acme.json:rw
+      - ./letsencrypt:/etc/letsencrypt
+      - ../../logs/:/logs/
+    networks: 
+      - traefik-net
+    
+  db:
+    image: postgres
+    restart: unless-stopped
+    env_file:
+      - postgres/database.env
+    ports:
+      - '127.0.0.1:5432:5432'
+    volumes:
+      - db-data:/var/lib/postgresql/data
+      - ./postgres/init.sql:/docker-entrypoint-initdb.d/create_tables.sql
+      - ./postgres/postgres.conf:/etc/postgresql/postgresql.conf
+    #command: postgres -c config_file=/etc/postgresql/postgresql.conf
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "api_ingest"]
+      interval: 5s
+      retries: 5
+    labels:
+      traefik.tcp.services.db.loadbalancer.server.port: 5432
+      traefik.tcp.routers.db.rule: HostSNI(`${SERVER_ROOT}`)
+      traefik.tcp.routers.db.tls.certresolver: lets-encrypt
+    networks:
+      - traefik-net
+
+  metabase:
+    image: metabase/metabase:latest
+    restart: unless-stopped
+    ports:
+      - 127.0.0.1:3000:3000
+    depends_on: [db]
+    links: [db]
+    volumes:
+      - "metabase.db:/metabase.db"
+      - "metabase-data:/metabase-data"
+      - /dev/urandom:/dev/random:ro
+    env_file:
+      - metabase/database.env
+    labels:
+      traefik.http.services.metabase.loadbalancer.server.port: 3000
+      traefik.http.routers.metabase.rule: Host(`metabase.${SERVER_ROOT}`)
+      traefik.http.routers.metabase.tls.certresolver: lets-encrypt
+    networks:
+      - traefik-net
+
+  live_py:
+    image: python-live:latest
+    restart: unless-stopped
+    ports:
+      - 127.0.0.1:5005:5005
+    volumes:
+      - '../live_py/:/app/'
+    env_file:
+      - ./python/database.env
+    networks:
+      - traefik-net
+    labels:
+      traefik.http.services.api-python.loadbalancer.server.port: 5005
+      traefik.http.routers.api-python.rule: Host(`interface.${SERVER_ROOT}`)
+      traefik.http.routers.api-python.tls.certresolver: lets-encrypt
+      
+  batch_py:
+    image: python-postgres:latest
+    volumes:
+      - '../batch_py/:/app/'
+      - '../../raw/:/raw/'
+    env_file:
+      - ./python/database.env
+    networks:
+      - traefik-net
+    depends_on: [db]
+    links: [db]
+      
+  go_ingest:
+    image: go_ingest:latest
+    #build: ../go_ingest
+    restart: unless-stopped
+    environment:
+      - APP_PORT=5006
+      - APP_NAME=GoIngest
+    #working_dir: /app/
+    entrypoint: /app/entrypoint.sh
+    env_file:
+      - ./python/database.env
+    #environment:
+      #- DB_PASS=${DB_PASSWORD}
+      #ports:
+      #- 5006:5006
+    volumes:
+      - '../go_ingest/:/app/'
+    depends_on: [db]
+        # condition: service_healthy
+    links: [db]
+    #volumes:
+    labels:
+      traefik.http.services.go-ingest.loadbalancer.server.port: 5006
+      traefik.http.routers.go-ingest.rule: Host(`ingest.${SERVER_ROOT}`)
+      #traefik.http.routers.orderservice.rule: Host(`$SERVER_ROOT`) && Path(`/v1/ingest`)
+      # traefik.http.routers.go-ingest.tls: true
+      traefik.http.routers.go-ingest.tls.certresolver: lets-encrypt
+    networks:
+      - traefik-net
+
+  prometheus:
+    image: bitnami/prometheus:latest
+    container_name: "prometheus"
+    ports:
+      - 127.0.0.1:9090:9090
+    user: "1000:1000"
+    volumes:
+      - ./prometheus/prometheus.yml:/opt/bitnami/prometheus/conf/prometheus.yml:ro
+      - ./prometheus/prometheus-data/:/opt/bitnami/prometheus/data:rw
+    labels:
+      traefik.docker.network: "traefik"
+      traefik.backend: "prometheus"
+        #traefik.port: 9090
+      traefik.http.services.prometheus.loadbalancer.server.port: 9090
+      traefik.http.routers.prometheus.rule: PathPrefix(`/metrics{regex:$$|/.*}`)
+      #traefik.http.routers.prometheus.rule: Host(`$SERVER_ROOT`) && Path(`/metrics`)
+      # traefik.http.routers.prometheus.tls: true
+      traefik.http.routers.prometheus.tls.certresolver: lets-encrypt
+      traefik.http.routers.prometheus.middlewares.simpleAuth: basicAuth
+    networks: 
+      - traefik-net
+
+volumes:
+  db-data:
+    #driver: local
+  metabase-data:
+
+  metabase.db:
+    
+networks:
+  traefik-net:
+    external: true
+    # driver: overlay
+    # attachable: true
+

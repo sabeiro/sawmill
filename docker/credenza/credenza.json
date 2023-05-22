@@ -1,0 +1,25 @@
+{
+  "service1":{
+     "account_id":2
+    ,"token":""
+    ,"url":"https://service1.co/api/v1/"
+    ,"headers":{"X-Api-Key":"","Content-Type":"application/x-www-form-urlencoded"}
+    ,"params":{"config_ram":25,"config_rampup":2}
+    ,"endpoint":[""]
+  }
+  ,"s3":{
+    "service_name":"s3"
+    ,"endpoint_url":""
+    ,"region_name":""
+    ,"aws_access_key_id":""
+    ,"aws_secret_access_key":""
+  }
+  ,"terraform":{
+    "token":""
+  }
+  ,"postgres":{
+    "user1":"pass1"
+    ,"user2":"pass2"
+    ,"user3":"pass3"
+  }
+}

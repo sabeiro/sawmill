@@ -1,0 +1,89 @@
+version: '3'
+x-airflow-common:
+  &airflow-common
+  #image: ${AIRFLOW_IMAGE_NAME:-apache/airflow:2.4.2}
+  image: airflow-boto-kafka
+  env_file:
+    - ./database.env
+  volumes:
+    - ../../dags:/opt/airflow/dags:z
+    - ${HOME}/log:/opt/airflow/logs:z
+    - ${HOME}/raw:/raw:z
+    - ./plugins:/opt/airflow/plugins:z
+    - ./config:/opt/airflow/config:z
+    - ./.inputrc:/home/airflow/.inputrc
+  user: "${AIRFLOW_UID:-50000}:${AIRFLOW_GID}"
+  external_links:
+    - db:db
+  depends_on:
+    redis:
+      condition: service_healthy
+    # db:
+    #   condition: service_healthy
+
+services:
+  redis: #vm.overcommit_memory = 1 /etc/sysctl.conf
+    image: redis:latest
+    # ports:
+    #   - 6379:6379
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 30s
+      retries: 50
+    restart: unless-stopped
+    networks: 
+      - traefik-net
+
+  airflow-webserver:
+    <<: *airflow-common
+    command: webserver
+    ports:
+       - "127.0.0.1:8083:8080"
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8083/health"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+    restart: unless-stopped
+    networks: 
+      - traefik-net
+
+  airflow-scheduler:
+    <<: *airflow-common
+    command: scheduler
+    restart: unless-stopped
+    networks: 
+      - traefik-net
+    
+  airflow-worker:
+    <<: *airflow-common
+    command: celery worker
+    restart: unless-stopped
+    networks: 
+      - traefik-net
+
+  airflow-init:
+    <<: *airflow-common
+    command: version
+    networks: 
+      - traefik-net
+
+  flower:
+    <<: *airflow-common
+    command: celery flower
+    # ports:
+    #   - 5555:5555
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:5555/"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+    restart: unless-stopped
+    networks: 
+      - traefik-net
+
+networks:
+  traefik-net:
+    external: true
+            

@@ -1,0 +1,138 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+		<meta http-equiv="Content-Style-Type" content="text/css" />
+		<meta name="generator" content="pandoc" />
+		<meta name="version" content="S5 1.1" />
+		<meta name="author" content="Giovanni Marelli" />
+		<title>roadmap</title>
+		<style type="text/css">
+		 code{white-space: pre-wrap;}
+		 span.smallcaps{font-variant: small-caps;}
+		 span.underline{text-decoration: underline;}
+		 div.column{display: inline-block; vertical-align: top; width: 50%;}
+		 div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+		 ul.task-list{list-style: none;}
+		</style>
+		<!-- configuration parameters -->
+		<meta name="defaultView" content="slideshow" />
+		<meta name="controlVis" content="hidden" />
+		<!-- style sheet links -->
+		<link rel="stylesheet" href="s5/default/slides.css" type="text/css" media="projection" id="slideProj" />
+		<link rel="stylesheet" href="s5/default/outline.css" type="text/css" media="screen" id="outlineStyle" />
+		<link rel="stylesheet" href="s5/default/print.css" type="text/css" media="print" id="slidePrint" />
+		<link rel="stylesheet" href="s5/default/opera.css" type="text/css" media="projection" id="operaFix" />
+		<link rel="stylesheet" href="css/slide_custom.css">
+	</head>
+	<body>
+		<div class="layout">
+			<div id="controls"></div>
+			<div id="currentSlide"></div>
+			<div id="header"></div>
+			<div id="footer">
+				<h1>2020/09/19</h1>
+				<h2>Data pipe proposal</h2>
+			</div>
+		</div>
+		<div class="presentation">
+			<div class="title-slide slide">
+				<h1 class="title">Data pipe proposal</h1>
+				<h3 class="author">Giovanni Marelli</h3>
+				<h4 class="date">2020/09/19</h4>
+			</div>
+			<div id="principles-for-a-data-pipeline" class="slide section level1">
+				<h1>principles for a data pipeline</h1>
+				<ul>
+					<li><strong>modular</strong>: each component should be maintained and developed independently</li>
+					<li><strong>monitored</strong>: we know what breaks and why</li>
+					<li><strong>historical consistency</strong>: ability to perform consistent analytics on past data</li>
+					<li><strong>quality assurance</strong>: we know when a KPI deteriorates and which days to exclude from analytics</li>
+					<li><strong>alerts</strong>: we get promptly informed when something goes wrong</li>
+					<li><strong>control panel</strong>: on the jobs running, ability to re-run and re-schedule</li>
+					<li><strong>analytics platform</strong>: parse and display the relevant metrics</li>
+					<li><strong>privacy layer</strong>: compliance and safe analytics</li>
+				</ul>
+			</div>
+			<div id="where-do-we-stand" class="slide section level1">
+				<h1>where do we stand?</h1>
+				<ul>
+					<li><strong>code</strong>: monolithic like code, no object oriented, one main contributor left, documentation missing</li>
+					<li><strong>ops</strong>: we have few dockers, no orchestration</li>
+					<li><strong>repo</strong>: the repository contains operations, monitoring, storage management, reporting… few libraries</li>
+					<li><strong>storage</strong>: we have a postgres, sqlite files, tool’s own database (sent emails)</li>
+					<li><strong>data amount</strong>: we are still not handling big data, good chance for redundancy</li>
+				</ul>
+			</div>
+			<div id="existing-data-sources" class="slide section level1">
+				<h1>existing data sources</h1>
+				<p>Documented <a href="https://www.notion.so/lightmeter/Internal-production-data-9f7f1c400c2c499092f67c50dafe2824">in notion</a></p>
+				<ul>
+					<li><strong>postgres</strong>: email traffic and some metrics</li>
+					<li><strong>SQLite</strong>:
+						<ul>
+							<li><em>bounces</em> bounced email addresses</li>
+							<li><em>l3m</em> table to populate the main UI</li>
+							<li><em>logtracker</em> populates the control center</li>
+						</ul></li>
+					<li><strong>sent emails</strong>: roundcube email server</li>
+					<li><strong>CRM</strong>: pipedrive to connect</li>
+					<li><strong>spreadsheets</strong>: different business critical spreadsheets not connected</li>
+				</ul>
+			</div>
+			<div id="requirements" class="slide section level1">
+				<h1>requirements</h1>
+				<ul>
+					<li><strong>integrate external platforms</strong>: easy way to include external platforms in the loop</li>
+					<li><strong>warming metrics</strong>: store and display warming metrics per client</li>
+					<li><strong>operational monitoring</strong>: logtrace to extend</li>
+					<li><strong>delivery funnel</strong>: complains and spam are missing</li>
+					<li><strong>spreadsheets</strong>: link the existing spreadsheets to databases -&gt; airtable</li>
+					<li><strong>centralized db</strong>: store most of the information in a central place</li>
+					<li><strong>visualization</strong>: internal (external?) dashboard</li>
+					<li><strong>l3m</strong>: migration of the UI</li>
+				</ul>
+			</div>
+			<div id="design" class="slide section level1">
+				<h1>design</h1>
+				<div class="figure">
+					<img src="../f/data_pipe.svg" title="data pipeline" width="1200" alt="" />
+					<p class="caption">data pipeline</p>
+				</div>
+			</div>
+			<div id="operation-workflowfunnel" class="slide section level1">
+				<h1>operation workflow/funnel</h1>
+				<div class="figure">
+					<img src="../f/ops.svg" title="ops workflow" width="1200" alt="" />
+					<p class="caption">ops workflow</p>
+				</div>
+			</div>
+			<div id="preliminaries" class="slide section level1">
+				<h1>preliminaries</h1>
+				<ul>
+					<li><strong>data modeling</strong>: how do we structure the data considering futuristic changes, what should stay relational</li>
+					<li><strong>metadata</strong>: which information we need to store</li>
+					<li><strong>naming convention</strong>: I would avoid <code>rcpt</code> as <code>recipient</code>, <code>topmx</code>… which we struggle to understand.</li>
+					<li><strong>entity relationship</strong>: Decide the <code>id</code> naming and how we join tables</li>
+					<li><strong>access control list</strong>: which access group should we create and what permissions do we need to grant (security, stability, traceability)</li>
+					<li><strong>entity relationship management</strong>: which IDs will connect all the tables, what we identify as unity (clients, campaigns, platform, transport…)</li>
+					<li><strong>operational metrics</strong>: what are the fundamental metrics to consider</li>
+					<li><strong>business metrics</strong>: what are the business goals to monitor</li>
+				</ul>
+			</div>
+			<div id="road-map" class="slide section level1">
+				<h1>road-map</h1>
+				<ul>
+					<li><strong>cluster</strong>: build the cluster, prepare the containers and link them</li>
+					<li><strong>central db</strong>: set up a central db (digital ocean?) and create an API</li>
+					<li><strong>platform integration</strong>: ad-hoc ETL, lambda, postman</li>
+					<li><strong>replace routines</strong>: decouple from the monolith to single services</li>
+					<li><strong>refining requirements</strong>: metrics, data structure, touchpoints</li>
+					<li><strong>API building</strong>: document with swagger</li>
+				</ul>
+			</div>
+		</div>
+		<!-- S5 JS -->
+		<script src="s5/default/slides.js" type="text/javascript"></script>
+	</body>
+</html>

@@ -1,0 +1,17 @@
+{
+	"ulid": "01GMARTENM7MN16G7X5W1QDW2E",
+	"minTime": 1671093043474,
+	"maxTime": 1671098400000,
+	"stats": {
+		"numSamples": 159941,
+		"numSeries": 448,
+		"numChunks": 1344
+	},
+	"compaction": {
+		"level": 1,
+		"sources": [
+			"01GMARTENM7MN16G7X5W1QDW2E"
+		]
+	},
+	"version": 1
+}

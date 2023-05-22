@@ -1,0 +1,149 @@
+entryPoints:
+  web:
+    address: ":80"
+    http:
+      redirections:
+        entryPoint:
+          to: "websecure"
+          scheme: "https"
+
+  websecure:
+    address: ":443"
+    http:
+      tls:
+        certResolver: lets-encrypt
+        domains:
+          - main: "storage.lightmeter.io"
+            sans:
+              - "metabase.storage.lightmeter.io"
+              - "docker.storage.lightmeter.io"
+              - "ingest.storage.lightmeter.io"
+              - "metric.storage.lightmeter.io"
+              - "interface.storage.lightmeter.io"
+  postgres:
+    address: ":5432"
+  docker-ui:
+    address: ":9000"
+  metrics:
+    address: ":6032"
+  microk8s:
+    address: ":10443"
+  api-python:
+    address: ":5005"
+  go-ingest:
+    address: ":5006"
+  metabase:
+    address: ":3000"
+
+http:
+  services:
+    web.loadbalancer.server.port: 80
+    websecure.loadbalancer.server.port: 443
+    # docker-ui.loadbalancer.server.port: 9000
+    # metrics.loadbalancer.server.port: 6032
+    # microk82.loadbalancer.server.port: 10443
+    # api-python.loadbalancer.server.port: 5005
+    # go-ingest.loadbalancer.server.port: 5006
+    # metabase.loadbalancer.server.port: 3000
+
+  routers:
+    to_web:
+      entryPoint: web
+      rule: "Host(`storage.lightmeter.io`)"
+      service: web
+
+    to_websecure:
+      entryPoint: websecure
+      rule: "Host(`storage.lightmeter.io`)"
+      service: websecure
+      tls:
+        certresolver: lets-encrypt
+    # to_metabase:
+    #   entryPoints: ["metabase"]
+    #   rule: "Host(`metabase.storage.lightmeter.io`)"
+    #   service: "metabase"
+    #   tls:
+    #     certresolver: lets-encrypt
+    # to_docker-ui:
+    #   entryPoints: ["docker_ui"]
+    #   rule: "Host(`docker.storage.lightmeter.io`)"
+    #   service: "docker_ui"
+    #   middlewares: ["simpleAuth"]
+    #   tls:
+    #     certresolver: lets-encrypt
+    # to_api-python:
+    #   entryPoints: ["api-python"]
+    #   rule: "Host(`ingest.storage.lightmeter.io`)"
+    #   service: "api-python"
+    #   tls:
+    #     certresolver: lets-encrypt
+    # to_go-ingest:
+    #   entryPoints: ["go-ingest"]
+    #   rule: "Host(`ingest.storage.lightmeter.io`)"
+    #   service: "go-ingest"
+    #   tls:
+    #     certresolver: lets-encrypt
+    # to_metrics:
+    #   entryPoints: ["metrics"]
+    #   rule: "Host(`metrics.storage.lightmeter.io`)"
+    #   service: "metrics"
+    #   tls:
+    #     certresolver: lets-encrypt
+
+    # to_local-folder:
+    #   rule: "Host(`storage.lightmeter.io`) && Path(`/local`)"
+
+  middlewares:
+    simpleAuth:
+      basicAuth:
+        users: ["admin:$apr1$8Y4INeOi$dd.TYrzzG.EvLYOVKXMnu0"]
+
+certificatesResolvers:
+  lets-encrypt:
+    acme:
+      email: "admin@lightmeter.io"
+      storage: "acme.json"
+      tlsChallenge: {}
+      httpChallenge:
+        entryPoint: web
+ 
+providers:
+  docker:
+    watch: true
+    # network: "trafik-net"
+    endpoint: "unix:///var/run/docker.sock"
+    exposedByDefault: false
+
+  file:
+    filename: "/etc/traefik/traefik.yml"
+    directory: "/etc/traefik/traefik.d"
+    watch: true
+
+accessLog:
+  filePath: "/logs/traefik-access.log"
+  format: json
+  bufferingSize: 100
+
+api:
+  dashboard: true
+
+accesslog: true
+
+environment:
+  - TZ=Europe/Berlin
+
+tcp:
+  routers:
+    to_postgres:
+      service: postgres
+      rule: "HostSNI(`storage.lightmeter.io`)"
+      tls:
+        certresolver: lets-entrcypt
+
+  services:
+    postgres.loadBalancer.server.port: 5432
+
+metrics:
+  prometheus:
+    entryPoint: metrics
+

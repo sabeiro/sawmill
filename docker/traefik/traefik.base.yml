@@ -1,0 +1,30 @@
+entryPoints:
+  web:
+    address: ":80"
+    http:
+      redirections:
+        entryPoint:
+          to: "websecure"
+          scheme: "https"
+
+  websecure:
+    address: ":443"
+
+api:
+  dashboard: true
+
+certificatesResolvers:
+  lets-encrypt:
+    acme:
+      email: "admin@lightmeter.io"
+      storage: "acme.json"
+      tlsChallenge: {}
+
+providers:
+  docker:
+    watch:true
+    network:"web"
+
+  file:
+    directory: "./traefik.d/"
+

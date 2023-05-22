@@ -1,0 +1,13 @@
+#sudo apt install python3-dev libpq-dev gcc libc-dev libffi-dev
+#apk add python3-dev libpq-dev gcc libc-dev libffi-dev
+requests
+boto3
+jwt
+flask
+flask-kafka
+flasgger
+kafka-python
+gunicorn
+#uvicorn
+#fastapi
+#fastapi_jwt_auth

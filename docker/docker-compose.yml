@@ -1,0 +1,112 @@
+version: '3'
+
+# x-python-common:
+#   &python-common
+#   env_file:
+#     - ./python/database.env
+#   networks:
+#     - traefik-net
+    
+services:
+  db:
+    image: postgres
+    restart: unless-stopped
+    env_file:
+      - postgres/database.env
+    ports:
+      - '127.0.0.1:5432:5432'
+    volumes:
+      - db-data:/var/lib/postgresql/data
+      - ./postgres/init.sql:/docker-entrypoint-initdb.d/create_tables.sql
+      - ./postgres/postgres.conf:/etc/postgresql/postgresql.conf
+    #command: postgres -c config_file=/etc/postgresql/postgresql.conf
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "api_ingest"]
+      interval: 5s
+      retries: 5
+    networks:
+      - traefik-net
+
+  metabase:
+    image: metabase/metabase:latest
+    restart: unless-stopped
+    ports:
+      - 127.0.0.1:3000:3000
+    depends_on: [db]
+    links: [db]
+    volumes:
+      - "metabase.db:/metabase.db"
+      - "metabase-data:/metabase-data"
+      - /dev/urandom:/dev/random:ro
+    env_file:
+      - metabase/database.env
+    networks:
+      - traefik-net
+
+  live_py:
+    image: python-live:latest
+    restart: unless-stopped
+    ports:
+      - 127.0.0.1:5005:5005
+    volumes:
+      - '../live_py/:/app/'
+    env_file:
+      - ./python/database.env
+    networks:
+      - traefik-net
+      
+  batch_py:
+    image: python-postgres:latest
+    volumes:
+      - '../batch_py/:/app/'
+      - '../../raw/:/raw/'
+    env_file:
+      - ./python/database.env
+    networks:
+      - traefik-net
+    depends_on: [db]
+    links: [db]
+      
+  go_ingest:
+    image: go_ingest:latest
+    #build: ../go_ingest
+    restart: unless-stopped
+    environment:
+      - APP_PORT=5006
+      - APP_NAME=GoIngest
+    entrypoint: /app/entrypoint.sh
+    env_file:
+      - ./python/database.env
+    volumes:
+      - '../go_ingest/:/app/'
+    depends_on: [db]
+        # condition: service_healthy
+    links: [db]
+    networks:
+      - traefik-net
+
+  prometheus:
+    image: bitnami/prometheus:latest
+    container_name: "prometheus"
+    ports:
+      - 127.0.0.1:9090:9090
+    user: "1000:1000"
+    volumes:
+      - ./prometheus/prometheus.yml:/opt/bitnami/prometheus/conf/prometheus.yml:ro
+      - ./prometheus/prometheus-data/:/opt/bitnami/prometheus/data:rw
+    networks: 
+      - traefik-net
+
+volumes:
+  db-data:
+    #driver: local
+  metabase-data:
+
+  metabase.db:
+    
+networks:
+  traefik-net:
+    external: true
+    # driver: overlay
+    # attachable: true
+
