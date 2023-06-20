@@ -4,10 +4,9 @@ from requests.auth import HTTPBasicAuth
 import requests, base64
 
 url = "http://0.0.0.0:5006"
-url = "https://ingest.storage.lightmeter.io"
 headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
 payload = {"id":1,"action":"(name, price) values ('test_product',11.25)","table":"products","filter":""}
-usrPass = "user_scrap:wga53tqitd#@"
+usrPass = ""
 
 def printOutput(resq):
   if resq.status_code < 400:

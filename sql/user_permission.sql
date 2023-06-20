@@ -15,7 +15,6 @@ CREATE USER airflow_rw WITH PASSWORD '';
 GRANT ALL PRIVILEGES ON DATABASE airflow TO airflow_rw;
 ALTER USER airflow_rw WITH SUPERUSER; 
 
-
 SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = 'airflow';
 SELECT * FROM pg_stat_activity WHERE pg_stat_activity.datname='airflow';
 SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = 'airflow';
@@ -37,7 +36,6 @@ join lateral (  SELECT * from aclexplode(nspacl) as x ) a on true
 join pg_user e on a.grantee = e.usesysid
 join pg_user r on a.grantor = r.usesysid 
  where e.usename = 'go_ingest';
-
 
 -- security user
 ALTER DATABASE api_ingest SET anon.privacy_by_default = True;

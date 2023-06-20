@@ -32,8 +32,8 @@ def get_consumer():
                        ,enable_auto_commit=True)#,auto_commit_interval_ms=1000)
 
 admin_client = KafkaAdminClient(bootstrap_servers=[KAFKA_SERVER],api_version=(0,11,15))
-topic = 'lightmetermailio_unknown'
-topic = 'lightmetermailio_outbound'
+topic = 'unknown'
+topic = 'outbound'
 
 consumer = KafkaConsumer(bootstrap_servers=[KAFKA_SERVER],auto_offset_reset='earliest',consumer_timeout_ms=1000,group_id=GROUP_ID,value_deserializer=lambda m: json.loads(m.decode('utf-8')),api_version=(0, 10, 1), )
 

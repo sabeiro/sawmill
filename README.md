@@ -11,7 +11,10 @@ output:
 
 # Sawmill
 
-Collection of utils for big log processing: spark, aws (athena, s3, ...)
+Infra for data pipeline ingesting real time and batch data, processing logs and visualize data.
+
+![log](docs/f/log2.jpg "log")
+_processing big logs_
 
 # data-pipeline
 
@@ -27,7 +30,7 @@ docker-compose up -d
 
 ## Features
 
-* [traefik webserver](https://storage.lightmeter.io/dashboard/#/) :8080
+* nginx ~~traefik~~ webserver 8080
 * postgres database :5432
 * docker-ui :9000
 * prometheus :6032 
@@ -48,17 +51,7 @@ docker-compose up -d
 * `docker/traefik/`: configuration and routes
 * `terraform/`: terraform configuration, currently on digital ocean
 
-## Test and Deploy
 
-Use the built-in continuous integration in GitLab.
-
-- [ ] [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/index.html)
-- [ ] [Analyze your code for known vulnerabilities with Static Application Security Testing(SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-- [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-- [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-- [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
-
-***
 
 ## Support
 
@@ -73,26 +66,9 @@ Open an issue tracker
 - **refining requirements**: metrics, data structure, touchpoints
 - **API building**: document with swagger
 
-## Contributing
-
-Collaborate on the project
-
-```
-cd existing_repo
-git remote add origin https://gitlab.com/lightmeter/data-pipeline.git
-git branch -M main
-git push -uf origin main
-```
-
-
-## Authors and acknowledgment
-
 
 ## License
 
 [CC by-sa-nc](https://creativecommons.org/licenses/by-nc-sa/4.0/)
 
-## Project status
-
-Still under testing
 
