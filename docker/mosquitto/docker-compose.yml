@@ -1,0 +1,46 @@
+ version: '3'
+
+ services:
+   mqtt-broker:
+     image: eclipse-mosquitto:latest
+     user: mosquitto
+     volumes:
+       - ${HOME}/log:/mosquitto/log/
+       - ./config/:/mosquitto/config/
+      - mqtt-broker-data:/mosquitto/data/
+      ports:
+        - 1883:1883
+        - 9001:9001
+      networks:
+        traefik-net:
+          ipv4_address: 172.100.10.10
+          
+    mqtt-pub:
+        image: eclipse-mosquitto:latest
+        command: sh -c "mosquitto_pub -h mqtt-broker -t test -m 'Hello World' -u admin -P password"
+        depends_on:
+            - mqtt-broker
+        networks:
+            traefik-net:
+                ipv4_address: 172.100.10.11
+    mqtt-sub:
+        image: eclipse-mosquitto:latest
+        command: sh -c "mosquitto_sub -h mqtt-broker -t test -u admin -P password"
+        depends_on:
+            - mqtt-broker
+        networks:
+            mqtt-net:
+                ipv4_address: 172.100.10.12
+volumes:
+  mqtt-broker-data
+    
+networks:
+  traefik-net:
+    external: true
+
+   # mqtt-net:
+   #     driver: bridge
+   #     ipam:
+   #     driver: default
+   #     config:
+   #         - subnet: 172.100.10.0/24

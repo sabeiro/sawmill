@@ -1,0 +1,6 @@
+{
+  "default-ulimits": {
+    "nofile": { "Soft": 65536, "Name": "nofile", "Hard": 65536 },
+    "memlock": { "Soft": -1, "Name": "memlock", "Hard": -1 }
+  }
+}
