@@ -1,0 +1,80 @@
+version: "3.7"
+services:
+  dagster_dbt:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    container_name: dagster_dbt
+    image: dagster_dbt
+    restart: unless-stopped
+    environment:
+      DAGSTER_POSTGRES_USER: "dagster_user"
+      DAGSTER_POSTGRES_PASSWORD: $DB_DAGSTER_PASS
+      DAGSTER_POSTGRES_DB: "dagster_db"
+      DAGSTER_CURRENT_IMAGE: "dagster_dbt"
+      DAGSTER_DBT_PARSE_PROJECT_ON_LOAD: 1
+    networks:
+      - webserver-net
+    volumes:
+      - ./repo.py:/opt/dagster/app/repo.py
+      - ./jaffle_shop:/opt/dagster/app/jaffle_shop
+
+  dagster_webserver:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    entrypoint:
+      - dagster-webserver
+      - -h
+      - "0.0.0.0"
+      - -p
+      - "3000"
+      - -w
+      - workspace.yaml
+    container_name: dagster_webserver
+    expose:
+      - "3000"
+    ports:
+      - "3000:3000"
+    environment:
+      DAGSTER_POSTGRES_USER: "dagster_user"
+      DAGSTER_POSTGRES_PASSWORD: $DB_DAGSTER_PASS
+      DAGSTER_POSTGRES_DB: "dagster_db"
+    volumes: 
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /tmp/io_manager_storage:/tmp/io_manager_storage
+    networks:
+      - webserver-net
+    depends_on:
+      - dagster_dbt
+
+  dagster_daemon:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    entrypoint:
+      - dagster-daemon
+      - run
+    container_name: dagster_daemon
+    restart: on-failure
+    environment:
+      DAGSTER_POSTGRES_USER: "dagster_user"
+      DAGSTER_POSTGRES_PASSWORD: $DB_DAGSTER_PASS
+      DAGSTER_POSTGRES_DB: "dagster_db"
+    volumes: # Make docker client accessible so we can launch containers using host docker
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /tmp/io_manager_storage:/tmp/io_manager_storage
+    networks:
+      - webserver-net
+    depends_on:
+      - dagster_dbt
+      - dagster_webserver
+
+networks:
+  webserver-net:
+    external: true
+
+volumes:
+  dwh:
+  postgres_volume:
+    name: dagster_postgres_volume

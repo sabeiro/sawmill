@@ -14,7 +14,7 @@ services:
       - ./password.db:/opt/presto-server/etc/password.db
       - ./presto_keystore.jks:/opt/presto-server/etc/presto_keystore.jks
     networks:
-      - traefik-net
+      - webserver-net
     
   # workerone:
   #   image: ahanaio/prestodb-sandbox
@@ -41,5 +41,5 @@ services:
   #     - traefik-net
 
 networks:
-  traefik-net:
+  webserver-net:
     external: true

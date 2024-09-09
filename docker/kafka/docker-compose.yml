@@ -18,7 +18,7 @@ services:
       - zk-data:/var/lib/zookeeper/data # for Data
       - zk-txn-logs:/var/lib/zookeeper/log # for transaction logs
     networks:
-      - traefik-net
+      - webserver-net
 
   kafka:
     image: confluentinc/cp-kafka:latest
@@ -47,7 +47,7 @@ services:
     volumes:
       - kafka-data:/var/lib/kafka/data
     networks:
-      - traefik-net
+      - webserver-net
 
   kafka-ui:
     #image: confluentinc/cp-enterprise-control-center:latest
@@ -68,7 +68,7 @@ services:
       #KAFKA_SASL_PASSWORD: ""
       PORT: 9021
     networks:
-      - traefik-net
+      - webserver-net
   
 volumes:
   kafka-data:
@@ -78,5 +78,5 @@ volumes:
   zk-txn-logs:
     
 networks:
-  traefik-net:
+  webserver-net:
     external: true

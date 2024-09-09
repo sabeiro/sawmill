@@ -13,7 +13,7 @@ services:
         #- -tlsverify
         #tcp://my-docker-host.domain:2376
     networks:
-      - traefik-net
+      - webserver-net
 
   # portainer:
   #   image: portainer/portainer:latest
@@ -29,6 +29,6 @@ services:
   #     - ./data:/data
 
 networks:
-  traefik-net:
+  webserver-net:
     external: true
 

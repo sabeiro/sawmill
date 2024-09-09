@@ -5,7 +5,7 @@ version: '3'
 #   env_file:
 #     - ./python/database.env
 #   networks:
-#     - traefik-net
+#     - webserver-net
     
 services:
   db:
@@ -21,11 +21,12 @@ services:
       - ./postgres/postgres.conf:/etc/postgresql/postgresql.conf
     #command: postgres -c config_file=/etc/postgresql/postgresql.conf
     healthcheck:
-      test: ["CMD", "pg_isready", "-U", "api_ingest"]
+      test: ["CMD-SHELL","pg_isready -d ",$POSTGRES_DB,"-U ",$POSTGRES_USER]
+      #test: ["CMD", "pg_isready", "-U", $DB_NAME]
       interval: 5s
       retries: 5
     networks:
-      - traefik-net
+      - webserver-net
 
   metabase:
     image: metabase/metabase:latest
@@ -41,7 +42,7 @@ services:
     env_file:
       - metabase/database.env
     networks:
-      - traefik-net
+      - webserver-net
 
   live_py:
     image: python-live:latest
@@ -53,7 +54,7 @@ services:
     env_file:
       - ./python/database.env
     networks:
-      - traefik-net
+      - webserver-net
       
   batch_py:
     image: python-postgres:latest
@@ -63,7 +64,7 @@ services:
     env_file:
       - ./python/database.env
     networks:
-      - traefik-net
+      - webserver-net
     depends_on: [db]
     links: [db]
       
@@ -83,7 +84,7 @@ services:
         # condition: service_healthy
     links: [db]
     networks:
-      - traefik-net
+      - webserver-net
 
   prometheus:
     image: bitnami/prometheus:latest
@@ -95,7 +96,7 @@ services:
       - ./prometheus/prometheus.yml:/opt/bitnami/prometheus/conf/prometheus.yml:ro
       - ./prometheus/prometheus-data/:/opt/bitnami/prometheus/data:rw
     networks: 
-      - traefik-net
+      - webserver-net
 
 volumes:
   db-data:
@@ -105,7 +106,7 @@ volumes:
   metabase.db:
     
 networks:
-  traefik-net:
+  webserver-net:
     external: true
     # driver: overlay
     # attachable: true

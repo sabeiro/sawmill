@@ -39,7 +39,7 @@ services:
       - ./letsencrypt:/etc/letsencrypt
       - ../../logs/:/logs/
     networks: 
-      - traefik-net
+      - webserver-net
     
   db:
     image: postgres
@@ -62,7 +62,7 @@ services:
       traefik.tcp.routers.db.rule: HostSNI(`${SERVER_ROOT}`)
       traefik.tcp.routers.db.tls.certresolver: lets-encrypt
     networks:
-      - traefik-net
+      - webserver-net
 
   metabase:
     image: metabase/metabase:latest
@@ -82,7 +82,7 @@ services:
       traefik.http.routers.metabase.rule: Host(`metabase.${SERVER_ROOT}`)
       traefik.http.routers.metabase.tls.certresolver: lets-encrypt
     networks:
-      - traefik-net
+      - webserver-net
 
   live_py:
     image: python-live:latest
@@ -94,7 +94,7 @@ services:
     env_file:
       - ./python/database.env
     networks:
-      - traefik-net
+      - webserver-net
     labels:
       traefik.http.services.api-python.loadbalancer.server.port: 5005
       traefik.http.routers.api-python.rule: Host(`interface.${SERVER_ROOT}`)
@@ -108,7 +108,7 @@ services:
     env_file:
       - ./python/database.env
     networks:
-      - traefik-net
+      - webserver-net
     depends_on: [db]
     links: [db]
       
@@ -140,7 +140,7 @@ services:
       # traefik.http.routers.go-ingest.tls: true
       traefik.http.routers.go-ingest.tls.certresolver: lets-encrypt
     networks:
-      - traefik-net
+      - webserver-net
 
   prometheus:
     image: bitnami/prometheus:latest
@@ -162,7 +162,7 @@ services:
       traefik.http.routers.prometheus.tls.certresolver: lets-encrypt
       traefik.http.routers.prometheus.middlewares.simpleAuth: basicAuth
     networks: 
-      - traefik-net
+      - webserver-net
 
 volumes:
   db-data:
@@ -172,7 +172,7 @@ volumes:
   metabase.db:
     
 networks:
-  traefik-net:
+  webserver-net:
     external: true
     # driver: overlay
     # attachable: true

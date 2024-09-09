@@ -12,7 +12,7 @@
         - 1883:1883
         - 9001:9001
       networks:
-        traefik-net:
+        webserver-net:
           ipv4_address: 172.100.10.10
           
     mqtt-pub:
@@ -21,7 +21,7 @@
         depends_on:
             - mqtt-broker
         networks:
-            traefik-net:
+            webserver-net:
                 ipv4_address: 172.100.10.11
     mqtt-sub:
         image: eclipse-mosquitto:latest
@@ -29,13 +29,13 @@
         depends_on:
             - mqtt-broker
         networks:
-            mqtt-net:
+            webserver-net:
                 ipv4_address: 172.100.10.12
 volumes:
   mqtt-broker-data
     
 networks:
-  traefik-net:
+  webserver-net:
     external: true
 
    # mqtt-net:

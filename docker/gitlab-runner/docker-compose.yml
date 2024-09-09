@@ -10,7 +10,7 @@ services:
     command:
       - --storage-driver=overlay2
     networks:
-      - traefik-net
+      - webserver-net
 
   runner:
     restart: unless-stopped
@@ -27,7 +27,7 @@ services:
       - ./config:/etc/gitlab-runner
       - ./certs:/certs
     networks:
-      - traefik-net
+      - webserver-net
 
   register-runner:
     restart: 'no'
@@ -60,5 +60,5 @@ volumes:
   gitlab-runner-config: {}
 
 networks:
-  traefik-net:
+  webserver-net:
     external: true

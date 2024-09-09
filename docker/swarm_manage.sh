@@ -1,7 +1,7 @@
 #https://blog.alexellis.io/docker-stacks-attachable-networks/
 SWARM_NAME=malestro
 SWARM_NODE=malestro
-NET_NAME=traefik-net
+NET_NAME=webserver-net
 SERVICE_NAME=db
 SUBNET="10.11.0.0/16"
 GATEWAY="10.11.0.1"

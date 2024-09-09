@@ -18,7 +18,7 @@ services:
       - "80:80"
       - "443:443"
     networks:
-      - traefik-net
+      - webserver-net
 
   certbot:
     image: certbot/certbot
@@ -29,7 +29,7 @@ services:
       - ${HOME}/log/:/var/log/
     entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
     networks:
-      - traefik-net
+      - webserver-net
 
   php-app:
     build:
@@ -44,9 +44,9 @@ services:
       - ./php/uploads.ini:/usr/local/etc/php/conf.d/uploads.ini
     working_dir: /var/www/html
     networks:
-      - traefik-net
+      - webserver-net
 
 networks:
-  traefik-net:
+  webserver-net:
     external: true
 
